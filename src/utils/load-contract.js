@@ -1,19 +1,26 @@
 
-import contract from "@truffle/contract"
+const NETWORK_ID = 5777;
 
-export const loadContract = async (name, provider) => {
-  const res = await fetch(`/contracts/${name}.json`)
-  const Artifact = await res.json()
-
-  const _contract = contract(Artifact)
-  _contract.setProvider(provider)
-
-  let deployedContract = null
-  try {
-    deployedContract = await _contract.deployed()
-  } catch {
-    console.error("You are connected to the wrong network")
+export const loadContract = async (
+  name,
+  provider
+) => {
+  if (!NETWORK_ID) {
+    return Promise.reject("Network ID is not defined!");
   }
 
-  return deployedContract
+  const res = await fetch(`/contracts/${name}.json`);
+  const Artifact = await res.json();
+
+  if (Artifact.networks[NETWORK_ID].address) {
+    const contract = new provider.eth.Contract(
+      Artifact.abi,
+      Artifact.networks[NETWORK_ID].address
+    )
+
+    return contract;
+  } else {
+    return Promise.reject(`Contract: [${name}] cannot be loaded!`);
+  }
 }
+  

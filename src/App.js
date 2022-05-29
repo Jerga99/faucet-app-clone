@@ -31,10 +31,12 @@ function App() {
       const provider = await detectEthereumProvider()
 
       if (provider) {
-        const contract = await loadContract("Faucet", provider)
+        const web3 = new Web3(provider)
+        const contract = await loadContract("Faucet", web3)
+        
         setAccountListener(provider)
         setWeb3Api({
-          web3: new Web3(provider),
+          web3,
           provider,
           contract,
           isProviderLoaded: true
@@ -51,7 +53,7 @@ function App() {
   useEffect(() => {
     const loadBalance = async () => {
       const { contract, web3 } = web3Api
-      const balance = await web3.eth.getBalance(contract.address)
+      const balance = await web3.eth.getBalance(contract._address)
       setBallance(web3.utils.fromWei(balance, "ether"))
     }
 
@@ -69,7 +71,7 @@ function App() {
 
   const addFunds = useCallback(async () => {
     const { contract, web3 } = web3Api
-    await contract.addFunds({
+    await contract.methods.addFunds().send({
       from: account,
       value: web3.utils.toWei("1", "ether")
     })
@@ -80,7 +82,7 @@ function App() {
   const withdraw = async () => {
     const { contract, web3 } = web3Api
     const withdrawAmount = web3.utils.toWei("0.1", "ether")
-    await contract.withdraw(withdrawAmount, {
+    await contract.methods.withdraw(withdrawAmount).send({
       from: account
     })
     reloadEffect()
